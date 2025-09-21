@@ -11,16 +11,25 @@
             --error-color: #e74c3c; --light-gray: #f4f7f9; --dark-gray: #2c3e50;
             --border-color: #ccc; --resizer-color: #bdc3c7;
         }
-        html, body { height: 100%; margin: 0; }
+        /* Modern CSS reset for intuitive layout math */
+        html { box-sizing: border-box; }
+        *, *:before, *:after { box-sizing: inherit; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--light-gray); color: #333; padding: 20px;
-            box-sizing: border-box; overflow: hidden;
+            background-color: var(--light-gray);
+            color: #333;
+            padding: 20px;
         }
         .container {
             background-color: #fff; padding: 30px; border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 1600px;
-            margin: 0 auto; display: flex; flex-direction: column; height: calc(100vh - 40px);
+            margin: 0 auto; display: flex; flex-direction: column;
+            min-height: 100%;
         }
 
         /* --- 2. Header & Controls --- */
@@ -31,15 +40,19 @@
         label { display: block; font-weight: 600; margin-bottom: 8px; }
         input[type="password"] {
             width: 100%; padding: 10px; border: 1px solid var(--border-color);
-            border-radius: 4px; box-sizing: border-box; font-size: 1rem;
+            border-radius: 4px; font-size: 1rem;
         }
         .token-help { font-size: 0.85em; color: #666; }
         .token-help a { color: var(--primary-color); text-decoration: none; }
         .input-error { color: var(--error-color); font-size: 0.85em; margin-top: 5px; min-height: 1.2em; }
 
-        /* --- 3. Main Editor/Preview Layout (Desktop) --- */
+        /* --- 3. Main Editor/Preview Layout --- */
         .view-switcher { display: none; }
-        .editor-preview-container { display: flex; flex-grow: 1; min-height: 300px; }
+        .editor-preview-container {
+            display: flex;
+            flex-grow: 1;
+            min-height: 0;
+        }
         .pane { display: flex; flex-direction: column; min-width: 50px; }
         .editor-pane { flex-basis: 50%; }
         .preview-pane { flex: 1; }
@@ -50,7 +63,7 @@
         .resizer:hover { background-color: var(--secondary-color); }
         textarea, iframe {
             width: 100%; height: 100%; border: 1px solid var(--border-color);
-            border-radius: 4px; box-sizing: border-box;
+            border-radius: 4px;
         }
         textarea { resize: none; font-family: "Courier New", monospace; font-size: 0.95em; padding: 10px; }
         iframe { background-color: #fff; }
@@ -68,6 +81,9 @@
         }
         button:hover { background-color: var(--secondary-color); }
         button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        button:focus-visible, input:focus-visible, textarea:focus-visible {
+            outline: 2px solid var(--primary-color); outline-offset: 2px;
+        }
         #result {
             margin-top: 20px; padding: 15px; border-radius: 4px;
             word-wrap: break-word; display: none; flex-shrink: 0; border: 1px solid transparent;
@@ -77,20 +93,27 @@
         #result.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
         .copy-button { background-color: var(--success-color); margin-top: 10px; font-size: 0.9em; padding: 8px; }
         .footer {
-            margin-top: auto; /* Pushes footer to the bottom of the flex container */
-            padding-top: 20px;
-            text-align: center;
-            font-size: 0.85em;
-            color: #7f8c8d;
-            flex-shrink: 0;
+            padding-top: 20px; text-align: center; font-size: 0.85em;
+            color: #7f8c8d; flex-shrink: 0;
         }
         .footer a { color: var(--secondary-color); text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
 
-        /* --- 5. Mobile Responsive Styles (Breakpoint: 800px) --- */
+        /* --- 5. Fullscreen & Mobile Styles --- */
+        body.fullscreen-preview { padding: 0; }
+        body.fullscreen-preview .header-controls,
+        body.fullscreen-preview .editor-pane,
+        body.fullscreen-preview .resizer,
+        body.fullscreen-preview #create-btn,
+        body.fullscreen-preview #result,
+        body.fullscreen-preview .footer { display: none; }
+        body.fullscreen-preview .container { padding: 0; box-shadow: none; min-height: 100vh; }
+        body.fullscreen-preview #icon-enter-fs { display: none; }
+        body.fullscreen-preview #icon-exit-fs { display: block; }
+
         @media (max-width: 800px) {
-            body { padding: 10px; overflow: auto; }
-            .container { padding: 15px; height: auto; min-height: calc(100vh - 20px); }
+            body { padding: 10px; }
+            .container { height: auto; min-height: calc(100vh - 20px); }
             h1 { font-size: 1.5em; }
             .view-switcher {
                 display: flex; margin-bottom: 10px; border: 1px solid var(--border-color);
@@ -101,7 +124,7 @@
                 color: var(--dark-gray); font-size: 1em; border-radius: 0;
             }
             .view-switcher button.active { background-color: var(--primary-color); color: #fff; }
-            .editor-preview-container { flex-direction: column; height: 60vh; }
+            .editor-preview-container { flex-direction: column; }
             .pane { display: none; width: 100%; height: 100%; }
             .pane.active { display: flex; }
             .resizer, #fullscreen-toggle { display: none; }
@@ -159,7 +182,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- 1. ELEMENT SELECTION ---
-            // Cache all DOM elements for performance and cleaner code.
             const elements = {
                 tokenInput: document.getElementById('github-token'),
                 htmlInput: document.getElementById('html-content'),
@@ -233,13 +255,10 @@
             async function handleCreateLink() {
                 const token = elements.tokenInput.value.trim();
                 const htmlContent = elements.htmlInput.value.trim();
-
                 if (!token) return showResult('error', '<h3>Error</h3>GitHub token is missing.');
                 if (!htmlContent) return showResult('error', '<h3>Error</h3>HTML content is empty.');
-
                 elements.createBtn.disabled = true;
                 elements.createBtn.textContent = 'Casting...';
-                
                 try {
                     const rawUrl = await createGist(token, htmlContent);
                     const githackUrl = convertToGithack(rawUrl);
@@ -305,7 +324,6 @@
                             files: { 'index.html': { content: content } }
                         })
                     });
-
                     if (!response.ok) {
                         const errorData = await response.json();
                         throw { status: response.status, data: errorData };
@@ -313,9 +331,7 @@
                     const data = await response.json();
                     return data.files['index.html'].raw_url;
                 } catch (error) {
-                    if (error instanceof TypeError) {
-                        throw { isNetworkError: true };
-                    }
+                    if (error instanceof TypeError) { throw { isNetworkError: true }; }
                     throw error;
                 }
             }
