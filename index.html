@@ -2,358 +2,610 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Cast: Live HTML Hosting</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Page Cast | Live HTML Hosting</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror Core & Theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+    
+    <!-- CodeMirror Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    
+    <!-- CodeMirror Addons (Auto-close tags, brackets) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+
     <style>
-        /* --- 1. Global Styles & Variables --- */
         :root {
-            --primary-color: #3498db; --secondary-color: #2980b9; --success-color: #1abc9c;
-            --error-color: #e74c3c; --light-gray: #f4f7f9; --dark-gray: #2c3e50;
-            --border-color: #ccc; --resizer-color: #bdc3c7;
+            --bg-app: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-editor: #282a36;
+            --border: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+            --header-height: 56px;
+            --nav-height: 60px; /* Mobile nav height */
         }
-        /* Modern CSS reset for intuitive layout math */
-        html { box-sizing: border-box; }
-        *, *:before, *:after { box-sizing: inherit; }
 
-        html, body {
-            height: 100%;
-            margin: 0;
-        }
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--light-gray);
-            color: #333;
-            padding: 20px;
-        }
-        .container {
-            background-color: #fff; padding: 30px; border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); width: 100%; max-width: 1600px;
-            margin: 0 auto; display: flex; flex-direction: column;
-            min-height: 100%;
-        }
-
-        /* --- 2. Header & Controls --- */
-        .header-controls { flex-shrink: 0; }
-        h1 { text-align: center; color: var(--dark-gray); margin: 0 0 5px; font-size: 1.8em; }
-        .subtitle { text-align: center; margin: 0 0 20px; color: #7f8c8d; }
-        .step { margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; }
-        input[type="password"] {
-            width: 100%; padding: 10px; border: 1px solid var(--border-color);
-            border-radius: 4px; font-size: 1rem;
-        }
-        .token-help { font-size: 0.85em; color: #666; }
-        .token-help a { color: var(--primary-color); text-decoration: none; }
-        .input-error { color: var(--error-color); font-size: 0.85em; margin-top: 5px; min-height: 1.2em; }
-
-        /* --- 3. Main Editor/Preview Layout --- */
-        .view-switcher { display: none; }
-        .editor-preview-container {
+            margin: 0; padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile */
             display: flex;
-            flex-grow: 1;
-            min-height: 0;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .pane { display: flex; flex-direction: column; min-width: 50px; }
-        .editor-pane { flex-basis: 50%; }
-        .preview-pane { flex: 1; }
+
+        /* --- Header --- */
+        header {
+            height: var(--header-height);
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            flex-shrink: 0;
+            z-index: 20;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .brand {
+            font-weight: 700; font-size: 1.1rem;
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+        }
+        .brand svg { color: var(--primary); }
+        
+        .actions { display: flex; gap: 8px; }
+        
+        .btn {
+            padding: 0 16px; height: 36px; border-radius: 6px; border: none;
+            font-weight: 500; cursor: pointer; font-size: 0.875rem;
+            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+            justify-content: center;
+        }
+        .btn-icon { padding: 0; width: 36px; }
+        
+        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid transparent; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
+        
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+        /* --- Main Layout --- */
+        main {
+            flex: 1; display: flex; position: relative; 
+            height: calc(100dvh - var(--header-height));
+            overflow: hidden;
+        }
+        
+        .pane { 
+            height: 100%; display: flex; flex-direction: column; position: relative; 
+            overflow: hidden;
+        }
+        
+        /* Editor Pane */
+        #editor-container { width: 50%; background: var(--bg-editor); }
+        .CodeMirror { 
+            height: 100%; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 14px; 
+            line-height: 1.6;
+        }
+        /* Custom Scrollbar for Editor */
+        .CodeMirror-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+        .CodeMirror-scroll::-webkit-scrollbar-track { background: var(--bg-editor); }
+        .CodeMirror-scroll::-webkit-scrollbar-thumb { background: #44475a; border-radius: 5px; }
+        
+        /* Preview Pane */
+        #preview-container { width: 50%; background: white; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; background: white; display: block; }
+        
+        /* Overlay to prevent iframe capturing mouse events during resize */
+        .iframe-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 5; display: none;
+        }
+
+        /* Resizer */
         .resizer {
-            flex-basis: 10px; flex-shrink: 0; background-color: var(--resizer-color);
-            cursor: col-resize; margin: 0 5px; border-radius: 5px; transition: background-color 0.2s;
+            width: 12px; background: transparent; cursor: col-resize;
+            position: absolute; left: 50%; top: 0; bottom: 0; z-index: 30;
+            transform: translateX(-50%); display: flex; justify-content: center;
+            align-items: center;
         }
-        .resizer:hover { background-color: var(--secondary-color); }
-        textarea, iframe {
-            width: 100%; height: 100%; border: 1px solid var(--border-color);
-            border-radius: 4px;
+        /* Visual line inside the invisible grab area */
+        .resizer::after {
+            content: ''; width: 1px; background: var(--border); height: 100%;
+            transition: all 0.2s;
         }
-        textarea { resize: none; font-family: "Courier New", monospace; font-size: 0.95em; padding: 10px; }
-        iframe { background-color: #fff; }
-        .pane-header { display: flex; justify-content: space-between; align-items: center; }
-        #fullscreen-toggle { cursor: pointer; padding: 2px; }
-        #fullscreen-toggle svg { width: 18px; height: 18px; vertical-align: middle; }
-        #icon-exit-fs { display: none; }
+        .resizer:hover::after, .resizer.dragging::after { 
+            background: var(--primary); width: 2px; 
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
 
-        /* --- 4. Buttons, Results & Footer --- */
-        #create-btn { margin-top: 20px; flex-shrink: 0; }
-        button {
-            display: block; width: 100%; padding: 12px; background-color: var(--primary-color);
-            color: white; border: none; border-radius: 4px; font-size: 1.1em;
-            font-weight: 600; cursor: pointer; transition: background-color 0.2s;
-        }
-        button:hover { background-color: var(--secondary-color); }
-        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        button:focus-visible, input:focus-visible, textarea:focus-visible {
-            outline: 2px solid var(--primary-color); outline-offset: 2px;
-        }
-        #result {
-            margin-top: 20px; padding: 15px; border-radius: 4px;
-            word-wrap: break-word; display: none; flex-shrink: 0; border: 1px solid transparent;
-        }
-        #result h3 { margin: 0 0 10px; }
-        #result.success { background-color: #e8f6ef; border-color: #d1e7dd; }
-        #result.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .copy-button { background-color: var(--success-color); margin-top: 10px; font-size: 0.9em; padding: 8px; }
-        .footer {
-            padding-top: 20px; text-align: center; font-size: 0.85em;
-            color: #7f8c8d; flex-shrink: 0;
-        }
-        .footer a { color: var(--secondary-color); text-decoration: none; }
-        .footer a:hover { text-decoration: underline; }
+        /* --- Mobile Navigation (Bottom Bar) --- */
+        .mobile-nav { display: none; }
 
-        /* --- 5. Fullscreen & Mobile Styles --- */
-        body.fullscreen-preview { padding: 0; }
-        body.fullscreen-preview .header-controls,
-        body.fullscreen-preview .editor-pane,
-        body.fullscreen-preview .resizer,
-        body.fullscreen-preview #create-btn,
-        body.fullscreen-preview #result,
-        body.fullscreen-preview .footer { display: none; }
-        body.fullscreen-preview .container { padding: 0; box-shadow: none; min-height: 100vh; }
-        body.fullscreen-preview #icon-enter-fs { display: none; }
-        body.fullscreen-preview #icon-exit-fs { display: block; }
+        /* --- Modal (Settings) --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 100;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.2s;
+        }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        
+        .modal {
+            background: var(--bg-panel); width: 90%; max-width: 420px;
+            padding: 24px; border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95); transition: transform 0.2s;
+        }
+        .modal-overlay.open .modal { transform: scale(1); }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal h2 { margin: 0; font-size: 1.25rem; color: var(--text-main); }
+        .close-modal { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+        .form-group input {
+            width: 100%; padding: 12px; background: var(--bg-app);
+            border: 1px solid var(--border); color: white; border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); }
+        
+        .help-text { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; }
+        .help-text a { color: var(--primary); text-decoration: none; font-weight: 500; }
+        .help-text a:hover { text-decoration: underline; }
 
-        @media (max-width: 800px) {
-            body { padding: 10px; }
-            .container { height: auto; min-height: calc(100vh - 20px); }
-            h1 { font-size: 1.5em; }
-            .view-switcher {
-                display: flex; margin-bottom: 10px; border: 1px solid var(--border-color);
-                border-radius: 4px; overflow: hidden;
+        /* --- Toast Notification --- */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            background: var(--bg-panel); border: 1px solid var(--border);
+            padding: 16px; border-radius: 10px;
+            display: flex; align-items: center; gap: 12px;
+            transform: translateY(20px); opacity: 0; pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 200; max-width: 380px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        
+        .toast-icon { display: flex; align-items: center; justify-content: center; }
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--error); }
+        
+        .toast-content { flex: 1; font-size: 0.9rem; line-height: 1.4; }
+        .toast-action {
+            background: rgba(255,255,255,0.1); border: none; color: var(--text-main);
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+            transition: background 0.2s;
+        }
+        .toast-action:hover { background: rgba(255,255,255,0.2); }
+
+        /* --- Responsive / Mobile --- */
+        @media (max-width: 768px) {
+            .desktop-text { display: none; }
+            header { padding: 0 12px; }
+            
+            /* Adjust Main Height to account for bottom nav */
+            main { height: calc(100dvh - var(--header-height) - var(--nav-height)); }
+            
+            /* Hide Resizer on Mobile */
+            .resizer { display: none; }
+            
+            /* Stack panes but hide inactive one */
+            #editor-container, #preview-container { width: 100%; height: 100%; display: none; border: none; }
+            #editor-container.active, #preview-container.active { display: block; }
+            
+            /* Mobile Bottom Nav */
+            .mobile-nav {
+                height: var(--nav-height); background: var(--bg-panel);
+                border-top: 1px solid var(--border);
+                display: flex; justify-content: space-around; align-items: center;
+                flex-shrink: 0; z-index: 50;
+                padding-bottom: env(safe-area-inset-bottom); /* iPhone Home Bar support */
             }
-            .view-switcher button {
-                flex: 1; padding: 10px; border: none; background-color: #fff;
-                color: var(--dark-gray); font-size: 1em; border-radius: 0;
+            
+            .nav-item {
+                flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                background: none; border: none; color: var(--text-muted);
+                gap: 4px; cursor: pointer; height: 100%;
+                font-size: 0.75rem; font-weight: 500;
             }
-            .view-switcher button.active { background-color: var(--primary-color); color: #fff; }
-            .editor-preview-container { flex-direction: column; }
-            .pane { display: none; width: 100%; height: 100%; }
-            .pane.active { display: flex; }
-            .resizer, #fullscreen-toggle { display: none; }
+            .nav-item svg { width: 20px; height: 20px; }
+            .nav-item.active { color: var(--primary); background: rgba(255,255,255,0.02); }
+            
+            .toast { left: 16px; right: 16px; bottom: 80px; max-width: none; }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-controls">
-            <h1>Page Cast</h1>
-            <p class="subtitle">Instantly host your HTML with a live preview.</p>
-            <div class="step">
-                <label for="github-token">1. GitHub Personal Access Token</label>
-                <input type="password" id="github-token" placeholder="Paste token to enable hosting">
-                <div id="token-error" class="input-error"></div>
-                <p class="token-help">
-                    <a href="https://github.com/settings/tokens/new?scopes=gist&description=Page%20Cast%20App" target="_blank">Create a token</a> with <strong>`gist`</strong> scope. It's saved securely in your browser.
-                </p>
-            </div>
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <span>Page Cast</span>
         </div>
-
-        <div class="view-switcher">
-            <button id="show-editor-btn" class="active">Editor</button>
-            <button id="show-preview-btn">Preview</button>
+        <div class="actions">
+            <button class="btn btn-secondary btn-icon" id="settings-btn" title="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button class="btn btn-primary" id="cast-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span class="desktop-text">Cast Page</span>
+                <span style="display:none" class="mobile-text">Cast</span>
+            </button>
         </div>
+    </header>
 
-        <div class="editor-preview-container">
-            <div class="pane editor-pane active" id="editor-pane">
-                <label for="html-content">2. Code Editor</label>
-                <textarea id="html-content" placeholder="<!-- Paste your HTML code here -->"></textarea>
-            </div>
-            <div class="resizer" id="resizer"></div>
-            <div class="pane preview-pane" id="preview-pane">
-                <div class="pane-header">
-                    <label>Live Interactive Preview</label>
-                    <span id="fullscreen-toggle" title="Toggle Fullscreen">
-                        <svg id="icon-enter-fs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-                        <svg id="icon-exit-fs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path></svg>
-                    </span>
-                </div>
-                <iframe id="preview-frame" title="Live HTML Preview"></iframe>
-            </div>
+    <!-- Main Workspace -->
+    <main>
+        <div id="editor-container" class="pane active">
+            <textarea id="code-editor"></textarea>
         </div>
-
-        <button id="create-btn">3. Cast Page</button>
-        <div id="result"></div>
         
-        <div class="footer">
-            Created by <a href="https://github.com/Romelium" target="_blank">Romelium</a>.
-            This tool is a single HTML file; feel free to save and use it offline.
+        <div class="resizer" id="resizer"></div>
+        
+        <div id="preview-container" class="pane">
+            <div class="iframe-overlay" id="iframe-overlay"></div>
+            <iframe id="preview-frame" title="Preview"></iframe>
+        </div>
+    </main>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav">
+        <button class="nav-item active" data-target="editor-container">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            Code
+        </button>
+        <button class="nav-item" data-target="preview-container">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            Preview
+        </button>
+    </nav>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-modal" id="close-modal-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="form-group">
+                <label for="github-token">GitHub Personal Access Token</label>
+                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
+            </div>
+            <div class="help-text">
+                <p style="margin-top:0">To host pages, you need a GitHub Token.</p>
+                <ol style="padding-left: 20px; margin-bottom: 10px;">
+                    <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Page%20Cast%20App" target="_blank">GitHub Tokens</a>.</li>
+                    <li>Generate a token with <strong>gist</strong> scope.</li>
+                    <li>Paste it above.</li>
+                </ol>
+                <small>Your token is saved locally in your browser.</small>
+            </div>
+            <div style="text-align: right; margin-top: 24px;">
+                <button class="btn btn-primary" id="save-settings" style="width: 100%">Save & Close</button>
+            </div>
         </div>
     </div>
 
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon" id="toast-icon"></div>
+        <div class="toast-content" id="toast-msg">Message</div>
+        <button class="toast-action" id="toast-action-btn" style="display:none">Action</button>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. ELEMENT SELECTION ---
-            const elements = {
-                tokenInput: document.getElementById('github-token'),
-                htmlInput: document.getElementById('html-content'),
-                createBtn: document.getElementById('create-btn'),
-                resultDiv: document.getElementById('result'),
-                previewFrame: document.getElementById('preview-frame'),
-                resizer: document.getElementById('resizer'),
-                editorPane: document.getElementById('editor-pane'),
-                previewPane: document.getElementById('preview-pane'),
-                fullscreenToggle: document.getElementById('fullscreen-toggle'),
-                showEditorBtn: document.getElementById('show-editor-btn'),
-                showPreviewBtn: document.getElementById('show-preview-btn'),
-                tokenError: document.getElementById('token-error'),
-            };
+        // --- Configuration & State ---
+        const elements = {
+            editor: document.getElementById('code-editor'),
+            preview: document.getElementById('preview-frame'),
+            resizer: document.getElementById('resizer'),
+            editorContainer: document.getElementById('editor-container'),
+            previewContainer: document.getElementById('preview-container'),
+            iframeOverlay: document.getElementById('iframe-overlay'),
+            settingsBtn: document.getElementById('settings-btn'),
+            settingsModal: document.getElementById('settings-modal'),
+            closeModalBtn: document.getElementById('close-modal-btn'),
+            saveSettingsBtn: document.getElementById('save-settings'),
+            tokenInput: document.getElementById('github-token'),
+            castBtn: document.getElementById('cast-btn'),
+            toast: document.getElementById('toast'),
+            toastMsg: document.getElementById('toast-msg'),
+            toastIcon: document.getElementById('toast-icon'),
+            toastAction: document.getElementById('toast-action-btn'),
+            navItems: document.querySelectorAll('.nav-item')
+        };
 
-            // --- 2. STATE & INITIALIZATION ---
-            let isResizing = false;
-            const savedToken = localStorage.getItem('githubApiToken');
-            if (savedToken) elements.tokenInput.value = savedToken;
-            updatePreview();
+        const defaultHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f2f5;
+            color: #1f2937;
+        }
+        .card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+        }
+        h1 { color: #3b82f6; margin-top: 0; }
+        p { line-height: 1.6; color: #6b7280; }
+        .btn {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Hello World!</h1>
+        <p>This is a live preview. Edit the code on the left (or "Code" tab on mobile) to see changes instantly.</p>
+        <a href="#" class="btn">Click Me</a>
+    </div>
+</body>
+</html>`;
 
-            // --- 3. EVENT LISTENERS ---
-            elements.showEditorBtn.addEventListener('click', () => switchTabView(true));
-            elements.showPreviewBtn.addEventListener('click', () => switchTabView(false));
-            elements.resizer.addEventListener('mousedown', () => { isResizing = true; document.body.style.cursor = 'col-resize'; });
-            document.addEventListener('mousemove', handleResize);
-            document.addEventListener('mouseup', () => { isResizing = false; document.body.style.cursor = 'default'; });
-            elements.fullscreenToggle.addEventListener('click', () => document.body.classList.toggle('fullscreen-preview'));
-            elements.htmlInput.addEventListener('input', debounce(updatePreview, 300));
-            elements.tokenInput.addEventListener('input', handleTokenInput);
-            elements.createBtn.addEventListener('click', handleCreateLink);
+        // --- Initialization ---
+        
+        // Load Saved Data
+        const savedToken = localStorage.getItem('pc_token');
+        const savedCode = localStorage.getItem('pc_code');
+        if (savedToken) elements.tokenInput.value = savedToken;
 
-            // --- 4. CORE LOGIC FUNCTIONS ---
+        // Setup CodeMirror
+        const cm = CodeMirror.fromTextArea(elements.editor, {
+            mode: 'htmlmixed',
+            theme: 'dracula',
+            lineNumbers: true,
+            lineWrapping: true,
+            autofocus: true,
+            tabSize: 2,
+            autoCloseTags: true,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            indentUnit: 2
+        });
+        
+        cm.setValue(savedCode || defaultHTML);
 
-            /** Switches between Editor and Preview tabs on mobile view. */
-            function switchTabView(showEditor) {
-                elements.editorPane.classList.toggle('active', showEditor);
-                elements.previewPane.classList.toggle('active', !showEditor);
-                elements.showEditorBtn.classList.toggle('active', showEditor);
-                elements.showPreviewBtn.classList.toggle('active', !showEditor);
+        // --- Core Logic ---
+
+        // 1. Live Preview & Auto-save
+        const updatePreview = () => {
+            const code = cm.getValue();
+            elements.preview.srcdoc = code;
+            localStorage.setItem('pc_code', code);
+        };
+        
+        let timeout;
+        cm.on('change', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(updatePreview, 600); // Debounce
+        });
+        updatePreview(); // Initial load
+
+        // 2. Resizer Logic (Desktop)
+        let isResizing = false;
+        
+        const startResize = () => {
+            isResizing = true;
+            elements.resizer.classList.add('dragging');
+            document.body.style.cursor = 'col-resize';
+            elements.iframeOverlay.style.display = 'block'; // Enable overlay to prevent iframe capturing mouse
+        };
+
+        const stopResize = () => {
+            if(isResizing) {
+                isResizing = false;
+                elements.resizer.classList.remove('dragging');
+                document.body.style.cursor = 'default';
+                elements.iframeOverlay.style.display = 'none';
+                cm.refresh(); 
             }
+        };
 
-            /** Handles the mouse move event to resize the editor pane. */
-            function handleResize(e) {
-                if (!isResizing) return;
-                const container = elements.resizer.parentElement;
-                const pointerRelativeX = e.clientX - container.offsetLeft;
-                const newEditorWidth = (pointerRelativeX - elements.resizer.offsetWidth / 2) / container.clientWidth * 100;
-                if (newEditorWidth > 10 && newEditorWidth < 90) {
-                    elements.editorPane.style.flexBasis = `${newEditorWidth}%`;
+        const resize = (e) => {
+            if (!isResizing) return;
+            const containerWidth = document.querySelector('main').offsetWidth;
+            // Calculate percentage
+            let newWidth = (e.clientX / containerWidth) * 100;
+            // Constraints
+            if (newWidth < 20) newWidth = 20;
+            if (newWidth > 80) newWidth = 80;
+
+            elements.editorContainer.style.width = `${newWidth}%`;
+            elements.previewContainer.style.width = `${100 - newWidth}%`;
+            elements.resizer.style.left = `${newWidth}%`;
+        };
+
+        elements.resizer.addEventListener('mousedown', startResize);
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResize);
+
+        // 3. Mobile Navigation
+        elements.navItems.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // UI Update
+                elements.navItems.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // View Update
+                const targetId = btn.dataset.target;
+                elements.editorContainer.classList.remove('active');
+                elements.previewContainer.classList.remove('active');
+                document.getElementById(targetId).classList.add('active');
+                
+                // Refresh editor if visible to fix rendering glitches
+                if(targetId === 'editor-container') {
+                    setTimeout(() => cm.refresh(), 10);
                 }
+            });
+        });
+
+        // 4. Settings Modal
+        const toggleModal = (show) => {
+            elements.settingsModal.classList.toggle('open', show);
+            if (!show) {
+                localStorage.setItem('pc_token', elements.tokenInput.value.trim());
+            } else {
+                elements.tokenInput.focus();
+            }
+        };
+        elements.settingsBtn.addEventListener('click', () => toggleModal(true));
+        elements.closeModalBtn.addEventListener('click', () => toggleModal(false));
+        elements.saveSettingsBtn.addEventListener('click', () => toggleModal(false));
+        elements.settingsModal.addEventListener('click', (e) => {
+            if (e.target === elements.settingsModal) toggleModal(false);
+        });
+
+        // 5. Toast System
+        let toastTimeout;
+        const showToast = (msg, type = 'info', actionText = null, actionCallback = null) => {
+            clearTimeout(toastTimeout);
+            
+            // Icons
+            let iconSvg = '';
+            if(type === 'success') iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            else if(type === 'error') iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            
+            elements.toastIcon.innerHTML = iconSvg;
+            elements.toastMsg.innerHTML = msg;
+            elements.toast.className = `toast show ${type}`;
+            
+            if (actionText && actionCallback) {
+                elements.toastAction.style.display = 'block';
+                elements.toastAction.textContent = actionText;
+                elements.toastAction.onclick = actionCallback;
+            } else {
+                elements.toastAction.style.display = 'none';
             }
 
-            /** Updates the content of the preview iframe. */
-            function updatePreview() {
-                elements.previewFrame.srcdoc = elements.htmlInput.value;
+            toastTimeout = setTimeout(() => {
+                elements.toast.classList.remove('show');
+            }, 5000);
+        };
+
+        // 6. Cast (Publish) Logic
+        elements.castBtn.addEventListener('click', async () => {
+            const token = elements.tokenInput.value.trim();
+            const content = cm.getValue();
+
+            if (!token) {
+                toggleModal(true);
+                showToast('Please enter your GitHub Token first.', 'error');
+                return;
             }
 
-            /** Validates token format and saves it to local storage. */
-            function handleTokenInput() {
-                const token = elements.tokenInput.value;
-                localStorage.setItem('githubApiToken', token);
-                if (token && !token.startsWith('ghp_') && !token.startsWith('github_pat_')) {
-                    elements.tokenError.textContent = 'Warning: This does not look like a valid GitHub token.';
-                } else {
-                    elements.tokenError.textContent = '';
+            // UI Loading State
+            const originalBtnContent = elements.castBtn.innerHTML;
+            elements.castBtn.disabled = true;
+            elements.castBtn.innerHTML = `<svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Casting...`;
+            
+            // Add simple spin animation style dynamically
+            if(!document.getElementById('spin-style')) {
+                const style = document.createElement('style');
+                style.id = 'spin-style';
+                style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`;
+                document.head.appendChild(style);
+            }
+
+            try {
+                const response = await fetch('https://api.github.com/gists', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `token ${token}`, 
+                        'Accept': 'application/vnd.github.v3+json' 
+                    },
+                    body: JSON.stringify({
+                        description: 'Hosted with Page Cast',
+                        public: true,
+                        files: { 'index.html': { content: content } }
+                    })
+                });
+
+                if (!response.ok) {
+                    if(response.status === 401) throw new Error('Invalid Token');
+                    throw new Error('GitHub API Error');
                 }
-            }
+                
+                const data = await response.json();
+                const rawUrl = data.files['index.html'].raw_url;
+                // Convert raw GitHub URL to a CDN URL for rendering HTML
+                const liveUrl = rawUrl.replace('gist.githubusercontent.com', 'gist.githack.com');
 
-            /** Main logic for creating the Gist and displaying the result. */
-            async function handleCreateLink() {
-                const token = elements.tokenInput.value.trim();
-                const htmlContent = elements.htmlInput.value.trim();
-                if (!token) return showResult('error', '<h3>Error</h3>GitHub token is missing.');
-                if (!htmlContent) return showResult('error', '<h3>Error</h3>HTML content is empty.');
-                elements.createBtn.disabled = true;
-                elements.createBtn.textContent = 'Casting...';
-                try {
-                    const rawUrl = await createGist(token, htmlContent);
-                    const githackUrl = convertToGithack(rawUrl);
-                    const successMessage = `<h3>Success!</h3>Your permanent URL is ready:<br><a href="${githackUrl}" target="_blank">${githackUrl}</a>`;
-                    showResult('success', successMessage);
-                    addCopyButton(githackUrl);
-                } catch (error) {
-                    let errorMessage = '<h3>Error</h3>';
-                    if (error.isNetworkError) {
-                        errorMessage += 'Could not connect to GitHub. Please check your internet connection.';
-                    } else if (error.status) {
-                        switch (error.status) {
-                            case 401: errorMessage += 'Authentication Failed. Please check that your token is correct and has the `gist` scope.'; break;
-                            case 403: errorMessage += 'Forbidden. You may have hit the API rate limit. Please wait a moment and try again.'; break;
-                            case 404: errorMessage += 'API Not Found. This is an unexpected error.'; break;
-                            default: errorMessage += `An API error occurred (Status ${error.status}). ${error.data?.message || 'Please try again.'}`;
-                        }
-                    } else {
-                        errorMessage += `An unknown error occurred: ${error.message}`;
-                    }
-                    showResult('error', errorMessage);
-                } finally {
-                    elements.createBtn.disabled = false;
-                    elements.createBtn.textContent = '3. Cast Page';
-                }
-            }
+                showToast('Page Casted Successfully!', 'success', 'Copy URL', () => {
+                    navigator.clipboard.writeText(liveUrl);
+                    elements.toastAction.textContent = 'Copied!';
+                    setTimeout(() => elements.toastAction.textContent = 'Copy URL', 2000);
+                });
 
-            /** Displays a message in the result area. */
-            function showResult(type, message) {
-                elements.resultDiv.style.display = 'block';
-                elements.resultDiv.className = type;
-                elements.resultDiv.innerHTML = message;
-            }
-
-            /** Adds a "Copy to Clipboard" button to the result area. */
-            function addCopyButton(url) {
-                const copyBtn = document.createElement('button');
-                copyBtn.textContent = 'Copy URL to Clipboard';
-                copyBtn.className = 'copy-button';
-                copyBtn.onclick = async () => {
-                    try {
-                        await navigator.clipboard.writeText(url);
-                        copyBtn.textContent = 'Copied!';
-                        setTimeout(() => { copyBtn.textContent = 'Copy URL to Clipboard'; }, 2000);
-                    } catch (err) {
-                        alert('Failed to copy URL to clipboard. Please copy it manually.');
-                    }
-                };
-                elements.resultDiv.appendChild(copyBtn);
-            }
-
-            // --- 5. API & UTILITY FUNCTIONS ---
-
-            /** Creates a public Gist and returns the raw file URL. */
-            async function createGist(token, content) {
-                try {
-                    const response = await fetch('https://api.github.com/gists', {
-                        method: 'POST',
-                        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
-                        body: JSON.stringify({
-                            description: 'Hosted with Page Cast',
-                            public: true,
-                            files: { 'index.html': { content: content } }
-                        })
-                    });
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw { status: response.status, data: errorData };
-                    }
-                    const data = await response.json();
-                    return data.files['index.html'].raw_url;
-                } catch (error) {
-                    if (error instanceof TypeError) { throw { isNetworkError: true }; }
-                    throw error;
-                }
-            }
-
-            /** Converts a GitHub raw content URL to a githack CDN URL. */
-            function convertToGithack(rawUrl) {
-                if (!rawUrl || !rawUrl.includes('gist.githubusercontent.com')) {
-                    throw new Error("Invalid raw Gist URL provided.");
-                }
-                return rawUrl.replace('gist.githubusercontent.com', 'gistcdn.githack.com');
-            }
-
-            /** Delays function execution to improve performance. */
-            function debounce(func, delay) {
-                let timeoutId;
-                return (...args) => {
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => func.apply(this, args), delay);
-                };
+            } catch (error) {
+                console.error(error);
+                let msg = 'Failed to cast page.';
+                if(error.message === 'Invalid Token') msg = 'Invalid GitHub Token.';
+                showToast(msg, 'error', 'Settings', () => toggleModal(true));
+            } finally {
+                elements.castBtn.disabled = false;
+                elements.castBtn.innerHTML = originalBtnContent;
             }
         });
-    </script>
 
+    </script>
 </body>
 </html>
