@@ -2,8 +2,7 @@
 
 A single HTML file for when you need to host some code without the drama.
 
-<img width="1360" height="615" alt="image" src="https://github.com/user-attachments/assets/ee664ebb-edaf-450b-9a13-64aaec00ecf2" />
-
+<img width="1360" height="768" alt="screenshot" src="https://github.com/user-attachments/assets/7e19230f-1846-46eb-b74b-22dcbdda288a" />
 
 | Link Type | URL |
 | :--- | :--- |
