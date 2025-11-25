@@ -2,751 +2,287 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Page Cast | Live HTML Hosting</title>
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <!-- CodeMirror Dependencies -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Newline Replacer</title>
     <style>
         :root {
-            --bg-app: #0f172a;
-            --bg-panel: #1e293b;
-            --bg-editor: #282a36;
-            --border: #334155;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --border: #cbd5e1;
             --success: #10b981;
-            --error: #ef4444;
-            --header-height: 56px;
-            --nav-height: 60px;
         }
-
-        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
-        
         body {
-            margin: 0; padding: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-app);
-            color: var(--text-main);
-            height: 100vh; height: 100dvh;
-            display: flex; flex-direction: column;
-            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 { color: #1e293b; margin-bottom: 20px; }
+        
+        /* Controls Section */
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
         }
 
-        /* Layout & Header */
-        header {
-            height: var(--header-height);
-            background-color: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px; flex-shrink: 0; z-index: 20;
+        .control-group {
+            display: flex;
+            flex-direction: column;
         }
 
-        .brand { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
-        .brand svg { color: var(--primary); }
-        .actions { display: flex; gap: 8px; }
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+
+        .regex-preview {
+            grid-column: 1 / -1;
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 4px;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+
+        /* Editor Section */
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 60vh;
+        }
+
+        .editor-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
 
         /* Buttons */
-        .btn {
-            padding: 0 16px; height: 36px; border-radius: 6px; border: none;
-            font-weight: 500; cursor: pointer; font-size: 0.875rem;
-            transition: all 0.2s; display: flex; align-items: center; gap: 8px;
-            justify-content: center; text-decoration: none; color: var(--text-main);
+        .action-btn {
+            background-color: white;
+            border: 1px solid var(--border);
+            color: #475569;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .btn-icon { padding: 0; width: 36px; }
-        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-muted); }
-        .btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        /* Main Workspace */
-        main {
-            flex: 1; display: flex; position: relative; 
-            height: calc(100dvh - var(--header-height)); overflow: hidden;
+        .action-btn:hover {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+            color: #1e293b;
         }
-        .pane { height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        
-        /* Editor */
-        #editor-container { width: 50%; background: var(--bg-editor); position: relative; }
-        .CodeMirror { height: 100%; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.6; }
-        .CodeMirror-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
-        .CodeMirror-scroll::-webkit-scrollbar-track { background: var(--bg-editor); }
-        .CodeMirror-scroll::-webkit-scrollbar-thumb { background: #44475a; border-radius: 5px; }
 
-        /* Search Panel */
-        .search-panel {
-            position: absolute; top: 10px; right: 20px; width: 340px;
-            background: var(--bg-panel); border: 1px solid var(--border);
-            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            z-index: 50; padding: 12px; display: flex; flex-direction: column; gap: 8px;
-            transition: all 0.2s ease;
+        .action-btn.copied {
+            background-color: var(--success);
+            border-color: var(--success);
+            color: white;
         }
-        .search-panel.hidden { transform: translateY(-10px); opacity: 0; pointer-events: none; }
-        .search-row { display: flex; gap: 6px; align-items: center; }
-        .search-input-group { flex: 1; position: relative; display: flex; align-items: center; }
-        
-        .search-panel input {
-            width: 100%; background: var(--bg-app); border: 1px solid var(--border);
-            color: white; padding: 6px 8px; border-radius: 4px;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-        }
-        .search-panel input:focus { border-color: var(--primary); }
-        .search-count { position: absolute; right: 8px; font-size: 0.75rem; color: var(--text-muted); pointer-events: none; }
-        
-        .search-btn {
-            background: rgba(255,255,255,0.1); border: none; color: var(--text-main);
-            width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .search-btn:hover { background: rgba(255,255,255,0.2); }
-        .search-btn.text-btn { width: auto; padding: 0 8px; font-size: 0.75rem; }
 
-        /* Search Highlights */
-        .cm-search-match { background-color: rgba(255, 255, 0, 0.4); }
-        .cm-search-match-active { background-color: rgba(255, 165, 0, 0.8); outline: 1px solid orange; }
-
-        /* Preview & Resizer */
-        #preview-container { width: 50%; background: white; position: relative; }
-        iframe { width: 100%; height: 100%; border: none; background: white; display: block; }
-        .iframe-overlay { position: absolute; inset: 0; z-index: 5; display: none; }
-        
-        .resizer {
-            width: 12px; background: transparent; cursor: col-resize;
-            position: absolute; left: 50%; top: 0; bottom: 0; z-index: 30;
-            transform: translateX(-50%); display: flex; justify-content: center;
+        textarea {
+            flex-grow: 1;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            resize: none;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
         }
-        .resizer::after { content: ''; width: 1px; background: var(--border); height: 100%; transition: all 0.2s; }
-        .resizer:hover::after, .resizer.dragging::after { background: var(--primary); width: 2px; }
 
-        /* Modals */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100;
-            display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.2s;
+        textarea:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
         }
-        .modal-overlay.open { display: flex; opacity: 1; }
-        .modal {
-            background: var(--bg-panel); width: 90%; max-width: 420px;
-            padding: 24px; border-radius: 16px; border: 1px solid var(--border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: scale(0.95); transition: transform 0.2s;
-        }
-        .modal-overlay.open .modal { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal h2 { margin: 0; font-size: 1.25rem; }
-        .close-modal { background: none; border: none; color: var(--text-muted); cursor: pointer; }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); }
-        .form-group input {
-            width: 100%; padding: 12px; background: var(--bg-app);
-            border: 1px solid var(--border); color: white; border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .form-group input:focus { border-color: var(--primary); }
-        .help-text { font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; }
-        .help-text a { color: var(--primary); text-decoration: none; }
 
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: var(--bg-panel); border: 1px solid var(--border);
-            padding: 16px; border-radius: 10px; display: flex; align-items: center; gap: 12px;
-            transform: translateY(20px); opacity: 0; pointer-events: none;
-            transition: all 0.3s; z-index: 200;
+        .status {
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: right;
         }
-        .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
-        .toast.success .toast-icon { color: var(--success); }
-        .toast.error .toast-icon { color: var(--error); }
 
-        /* Utilities */
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 1s linear infinite; }
-        .mobile-nav { display: none; }
-
-        /* Mobile Responsive */
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
-            .desktop-text { display: none; }
-            header { padding: 0 12px; }
-            main { height: calc(100dvh - var(--header-height) - var(--nav-height)); }
-            .resizer { display: none; }
-            #editor-container, #preview-container { width: 100%; height: 100%; display: none; }
-            #editor-container.active, #preview-container.active { display: block; }
-            
-            .mobile-nav {
-                height: var(--nav-height); background: var(--bg-panel);
-                border-top: 1px solid var(--border);
-                display: flex; justify-content: space-around; align-items: center;
-                flex-shrink: 0; z-index: 50; padding-bottom: env(safe-area-inset-bottom);
-            }
-            .nav-item {
-                flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-                background: none; border: none; color: var(--text-muted); gap: 4px; height: 100%; font-size: 0.75rem;
-            }
-            .nav-item.active { color: var(--primary); background: rgba(255,255,255,0.02); }
-            .toast { left: 16px; right: 16px; bottom: 80px; }
-            .search-panel { left: 10px; right: 10px; width: auto; top: 10px; }
+            .editor-container { grid-template-columns: 1fr; height: auto; }
+            textarea { height: 300px; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-            <span>Page Cast</span>
-        </div>
-        <div class="actions">
-            <button class="btn btn-secondary btn-icon" id="settings-btn" title="Settings">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            </button>
-            <button class="btn btn-primary" id="cast-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                <span class="desktop-text">Cast Page</span>
-                <span style="display:none" class="mobile-text">Cast</span>
-            </button>
-        </div>
-    </header>
+    <h1>Conditional Newline Replacer</h1>
 
-    <main>
-        <div id="editor-container" class="pane active">
-            <textarea id="code-editor"></textarea>
-            
-            <!-- Search & Replace Panel -->
-            <div id="search-panel" class="search-panel hidden">
-                <div class="search-row">
-                    <div class="search-input-group">
-                        <input type="text" id="find-input" placeholder="Find">
-                        <span id="search-count" class="search-count"></span>
-                    </div>
-                    <button class="search-btn" id="find-prev" title="Previous (Shift+Enter)">↑</button>
-                    <button class="search-btn" id="find-next" title="Next (Enter)">↓</button>
-                    <button class="search-btn" id="close-search" title="Close (Esc)">×</button>
-                </div>
-                <div class="search-row" id="replace-row" style="display:none">
-                    <div class="search-input-group">
-                        <input type="text" id="replace-input" placeholder="Replace">
-                    </div>
-                    <button class="search-btn text-btn" id="replace-btn">Replace</button>
-                    <button class="search-btn text-btn" id="replace-all-btn">All</button>
-                </div>
-            </div>
+    <div class="controls">
+        <div class="control-group">
+            <label for="notBefore">Do NOT match if preceded by (X):</label>
+            <input type="text" id="notBefore" value="-" placeholder="Leave empty to ignore">
         </div>
-        
-        <div class="resizer" id="resizer"></div>
-        
-        <div id="preview-container" class="pane">
-            <div class="iframe-overlay" id="iframe-overlay"></div>
-            <iframe id="preview-frame" title="Preview"></iframe>
+        <div class="control-group">
+            <label for="notAfter">Do NOT match if followed by (Y):</label>
+            <input type="text" id="notAfter" value="-" placeholder="Leave empty to ignore">
         </div>
-    </main>
-
-    <nav class="mobile-nav">
-        <button class="nav-item active" data-target="editor-container">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-            Code
-        </button>
-        <button class="nav-item" data-target="preview-container">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            Preview
-        </button>
-    </nav>
-
-    <!-- Settings Modal -->
-    <div class="modal-overlay" id="settings-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="close-modal" data-close="settings-modal">✕</button>
-            </div>
-            <div class="form-group">
-                <label for="github-token">GitHub Personal Access Token</label>
-                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxx" autocomplete="off">
-            </div>
-            <div class="help-text">
-                <p style="margin-top:0">To host pages, you need a GitHub Token.</p>
-                <ol style="padding-left: 20px; margin-bottom: 10px;">
-                    <li>Go to <a href="https://github.com/settings/tokens/new?scopes=gist&description=Page%20Cast%20App" target="_blank">GitHub Tokens</a>.</li>
-                    <li>Generate a token with <strong>gist</strong> scope.</li>
-                    <li>Paste it above.</li>
-                </ol>
-            </div>
-            <div style="text-align: right; margin-top: 24px;">
-                <button class="btn btn-primary" id="save-settings" style="width: 100%">Save & Close</button>
-            </div>
+        <div class="control-group">
+            <label for="replacement">Replace match with:</label>
+            <input type="text" id="replacement" value="<br>">
+        </div>
+        <div class="regex-preview" id="regexDisplay">
+            Current Regex: (?&lt;!-)\n(?!-)
         </div>
     </div>
 
-    <!-- Share Modal -->
-    <div class="modal-overlay" id="share-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Page Published!</h2>
-                <button class="close-modal" data-close="share-modal">✕</button>
+    <div class="editor-container">
+        <!-- Input Side -->
+        <div class="editor-box">
+            <div class="editor-header">
+                <label>Input Text</label>
+                <button class="action-btn" id="btnPaste" title="Paste from Clipboard">
+                    📋 Paste Input
+                </button>
             </div>
-            <div class="form-group">
-                <label for="share-url">Your Live URL</label>
-                <input type="text" id="share-url" readonly onclick="this.select()">
+            <textarea id="input" placeholder="Paste your text here...">
+Line 1
+-
+Line 2 (This newline is preceded by -)
+Line 3
+-
+Line 4 (This newline is followed by -)
+Line 5
+Line 6</textarea>
+        </div>
+
+        <!-- Output Side -->
+        <div class="editor-box">
+            <div class="editor-header">
+                <label>Output Result</label>
+                <button class="action-btn" id="btnCopy" title="Copy to Clipboard">
+                    📋 Copy Output
+                </button>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn btn-secondary" id="copy-url-btn" style="flex:1">Copy</button>
-                <a href="#" target="_blank" id="visit-url-btn" class="btn btn-primary" style="flex:1">Visit</a>
+            <textarea id="output" readonly></textarea>
+            <div class="status">
+                <span id="matchCount">0 replacements made</span>
             </div>
         </div>
-    </div>
-
-    <!-- Toast -->
-    <div class="toast" id="toast">
-        <div class="toast-icon" id="toast-icon"></div>
-        <div class="toast-content" id="toast-msg"></div>
     </div>
 
     <script>
-        // --- Constants & Config ---
-        const CONFIG = {
-            DEFAULT_CODE: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Page</title>
-    <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; color: #1f2937; }
-        .card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 400px; }
-        h1 { color: #3b82f6; margin-top: 0; }
-        .btn { display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>Hello World!</h1>
-        <p>Edit code to see changes instantly.</p>
-        <a href="#" class="btn">Click Me</a>
-    </div>
-</body>
-</html>`,
-            STORAGE_KEYS: { TOKEN: 'pc_token', CODE: 'pc_code' }
-        };
+        const inputEl = document.getElementById('input');
+        const outputEl = document.getElementById('output');
+        const notBeforeEl = document.getElementById('notBefore');
+        const notAfterEl = document.getElementById('notAfter');
+        const replacementEl = document.getElementById('replacement');
+        const regexDisplayEl = document.getElementById('regexDisplay');
+        const matchCountEl = document.getElementById('matchCount');
+        const btnPaste = document.getElementById('btnPaste');
+        const btnCopy = document.getElementById('btnCopy');
 
-        // --- DOM Elements ---
-        const DOM = {
-            editor: document.getElementById('code-editor'),
-            preview: document.getElementById('preview-frame'),
-            resizer: document.getElementById('resizer'),
-            containers: {
-                editor: document.getElementById('editor-container'),
-                preview: document.getElementById('preview-container'),
-                main: document.querySelector('main')
-            },
-            overlay: document.getElementById('iframe-overlay'),
-            modals: {
-                settings: document.getElementById('settings-modal'),
-                share: document.getElementById('share-modal')
-            },
-            inputs: {
-                token: document.getElementById('github-token'),
-                shareUrl: document.getElementById('share-url'),
-                find: document.getElementById('find-input'),
-                replace: document.getElementById('replace-input')
-            },
-            buttons: {
-                settings: document.getElementById('settings-btn'),
-                saveSettings: document.getElementById('save-settings'),
-                cast: document.getElementById('cast-btn'),
-                copy: document.getElementById('copy-url-btn'),
-                visit: document.getElementById('visit-url-btn'),
-                closeModals: document.querySelectorAll('.close-modal'),
-                navItems: document.querySelectorAll('.nav-item'),
-                // Search Buttons
-                findNext: document.getElementById('find-next'),
-                findPrev: document.getElementById('find-prev'),
-                closeSearch: document.getElementById('close-search'),
-                replace: document.getElementById('replace-btn'),
-                replaceAll: document.getElementById('replace-all-btn')
-            },
-            search: {
-                panel: document.getElementById('search-panel'),
-                replaceRow: document.getElementById('replace-row'),
-                count: document.getElementById('search-count')
-            },
-            toast: {
-                el: document.getElementById('toast'),
-                msg: document.getElementById('toast-msg'),
-                icon: document.getElementById('toast-icon')
-            }
-        };
+        // Helper to escape special regex characters
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
 
-        // --- Utilities ---
-        const Utils = {
-            debounce: (func, wait) => {
-                let timeout;
-                return (...args) => {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(this, args), wait);
-                };
-            },
+        function updateOutput() {
+            const text = inputEl.value;
+            const x = notBeforeEl.value;
+            const y = notAfterEl.value;
+            const replacement = replacementEl.value;
+
+            // Build Regex
+            let lookbehind = x.length > 0 ? `(?<!${escapeRegex(x)})` : "";
+            let lookahead = y.length > 0 ? `(?!${escapeRegex(y)})` : "";
+            const patternString = `${lookbehind}\\n${lookahead}`;
             
-            showToast: (msg, type = 'info') => {
-                const icons = {
-                    success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
-                    error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
-                };
-                DOM.toast.icon.innerHTML = icons[type] || '';
-                DOM.toast.msg.textContent = msg;
-                DOM.toast.el.className = `toast show ${type}`;
-                setTimeout(() => DOM.toast.el.classList.remove('show'), 4000);
+            regexDisplayEl.textContent = `Current Regex: ${patternString}`;
+
+            try {
+                const regex = new RegExp(patternString, 'g');
+                
+                const matches = text.match(regex);
+                const count = matches ? matches.length : 0;
+                matchCountEl.textContent = `${count} replacement${count !== 1 ? 's' : ''} made`;
+
+                const result = text.replace(regex, replacement);
+                outputEl.value = result;
+
+            } catch (e) {
+                outputEl.value = "Error: Browser does not support Lookbehind regex.";
             }
-        };
+        }
 
-        // --- Search Logic ---
-        const Search = {
-            overlay: null,
-            
-            init() {
-                // Event Listeners
-                DOM.inputs.find.addEventListener('input', () => this.update());
-                DOM.inputs.find.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        e.shiftKey ? this.findPrev() : this.findNext();
-                    }
-                });
-                DOM.inputs.replace.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') this.replace();
-                });
-                
-                DOM.buttons.findNext.onclick = () => this.findNext();
-                DOM.buttons.findPrev.onclick = () => this.findPrev();
-                DOM.buttons.closeSearch.onclick = () => this.close();
-                DOM.buttons.replace.onclick = () => this.replace();
-                DOM.buttons.replaceAll.onclick = () => this.replaceAll();
-            },
+        // --- Button Logic ---
 
-            toggle(showReplace = false) {
-                DOM.search.panel.classList.remove('hidden');
-                DOM.search.replaceRow.style.display = showReplace ? 'flex' : 'none';
-                DOM.inputs.find.focus();
-                if (Editor.cm.getSelection()) {
-                    DOM.inputs.find.value = Editor.cm.getSelection();
-                }
-                this.update();
-            },
-
-            close() {
-                DOM.search.panel.classList.add('hidden');
-                Editor.cm.focus();
-                this.clearOverlay();
-            },
-
-            clearOverlay() {
-                if (this.overlay) {
-                    Editor.cm.removeOverlay(this.overlay);
-                    this.overlay = null;
-                }
-                DOM.search.count.textContent = '';
-            },
-
-            update() {
-                const query = DOM.inputs.find.value;
-                this.clearOverlay();
-                if (!query) return;
-
-                // Highlight Overlay
-                this.overlay = {
-                    token: (stream) => {
-                        if (stream.match(query, false)) {
-                            stream.match(query);
-                            return "search-match";
-                        }
-                        while (stream.next() != null && !stream.match(query, false)) {}
-                        return null;
-                    }
-                };
-                Editor.cm.addOverlay(this.overlay);
-                this.countMatches(query);
-            },
-
-            countMatches(query) {
-                let cursor = Editor.cm.getSearchCursor(query);
-                let total = 0;
-                while (cursor.findNext()) total++;
-                
-                if (total === 0) {
-                    DOM.search.count.textContent = 'No results';
-                } else {
-                    this.updateCurrentIndex(query, total);
-                }
-            },
-
-            updateCurrentIndex(query, total) {
-                // Calculate "X of Y" based on cursor position
-                let current = 0;
-                let cursor = Editor.cm.getSearchCursor(query);
-                const selfPos = Editor.cm.getCursor('head');
-                
-                let found = false;
-                let idx = 0;
-                while(cursor.findNext()) {
-                    idx++;
-                    const to = cursor.to();
-                    // If cursor is at the end of a match, consider that the current one
-                    if (selfPos.line === to.line && selfPos.ch === to.ch) {
-                        current = idx;
-                        found = true;
-                    }
-                }
-                // Fallback: if not exactly on a match, show total
-                DOM.search.count.textContent = found ? `${current} of ${total}` : `${total} matches`;
-            },
-
-            findNext() { this.navigate(false); },
-            findPrev() { this.navigate(true); },
-
-            navigate(reverse) {
-                const query = DOM.inputs.find.value;
-                if (!query) return;
-                
-                const cursor = Editor.cm.getSearchCursor(query, Editor.cm.getCursor());
-                const found = reverse ? cursor.findPrevious() : cursor.findNext();
-
-                if (found) {
-                    Editor.cm.setSelection(cursor.from(), cursor.to());
-                    Editor.cm.scrollIntoView({from: cursor.from(), to: cursor.to()}, 20);
-                } else {
-                    // Wrap around
-                    const startPos = reverse 
-                        ? {line: Editor.cm.lastLine(), ch: Editor.cm.getLine(Editor.cm.lastLine()).length} 
-                        : {line: 0, ch: 0};
-                    const wrapCursor = Editor.cm.getSearchCursor(query, startPos);
-                    if (reverse ? wrapCursor.findPrevious() : wrapCursor.findNext()) {
-                        Editor.cm.setSelection(wrapCursor.from(), wrapCursor.to());
-                        Editor.cm.scrollIntoView({from: wrapCursor.from(), to: wrapCursor.to()}, 20);
-                    }
-                }
-                this.countMatches(query);
-            },
-
-            replace() {
-                const query = DOM.inputs.find.value;
-                const replacement = DOM.inputs.replace.value;
-                if (!query) return;
-                
-                const cursor = Editor.cm.getSearchCursor(query, Editor.cm.getCursor());
-                if (cursor.findNext()) {
-                    cursor.replace(replacement);
-                    this.findNext();
-                    this.update();
-                } else {
-                    this.findNext();
-                }
-            },
-
-            replaceAll() {
-                const query = DOM.inputs.find.value;
-                const replacement = DOM.inputs.replace.value;
-                if (!query) return;
-
-                Editor.cm.operation(() => {
-                    const cursor = Editor.cm.getSearchCursor(query);
-                    while (cursor.findNext()) cursor.replace(replacement);
-                });
-                this.update();
+        // Paste Handler
+        btnPaste.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                inputEl.value = text;
+                updateOutput(); // Trigger the regex immediately
+            } catch (err) {
+                alert('Failed to read clipboard. Please allow permissions or paste manually.');
             }
-        };
+        });
 
-        // --- Editor Logic ---
-        const Editor = {
-            cm: null,
-            init() {
-                this.cm = CodeMirror.fromTextArea(DOM.editor, {
-                    mode: 'htmlmixed', theme: 'dracula',
-                    lineNumbers: true, lineWrapping: true,
-                    autofocus: true, tabSize: 2, indentUnit: 2,
-                    autoCloseTags: true, autoCloseBrackets: true, matchBrackets: true,
-                    extraKeys: {
-                        "Ctrl-F": () => Search.toggle(false),
-                        "Cmd-F": () => Search.toggle(false),
-                        "Ctrl-H": () => Search.toggle(true),
-                        "Cmd-Option-F": () => Search.toggle(true),
-                        "Esc": () => Search.close(),
-                        "F3": () => Search.findNext(),
-                        "Shift-F3": () => Search.findPrev()
-                    }
-                });
+        // Copy Handler
+        btnCopy.addEventListener('click', () => {
+            if (!outputEl.value) return;
 
-                const savedCode = localStorage.getItem(CONFIG.STORAGE_KEYS.CODE);
-                this.cm.setValue(savedCode || CONFIG.DEFAULT_CODE);
-                
-                this.cm.on('change', Utils.debounce(() => {
-                    const code = this.cm.getValue();
-                    DOM.preview.srcdoc = code;
-                    localStorage.setItem(CONFIG.STORAGE_KEYS.CODE, code);
-                }, 600));
-                
-                // Initial Preview
-                DOM.preview.srcdoc = this.cm.getValue();
-            }
-        };
+            navigator.clipboard.writeText(outputEl.value).then(() => {
+                // Visual Feedback
+                const originalText = btnCopy.innerText;
+                btnCopy.innerText = "✅ Copied!";
+                btnCopy.classList.add('copied');
 
-        // --- App Logic ---
-        const App = {
-            init() {
-                Editor.init();
-                Search.init();
-                this.setupResizer();
-                this.setupUI();
-                
-                // Load Token
-                const savedToken = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
-                if (savedToken) DOM.inputs.token.value = savedToken;
-            },
+                setTimeout(() => {
+                    btnCopy.innerText = originalText;
+                    btnCopy.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy text.');
+            });
+        });
 
-            setupResizer() {
-                let isResizing = false;
-                
-                const start = () => {
-                    isResizing = true;
-                    DOM.resizer.classList.add('dragging');
-                    document.body.style.cursor = 'col-resize';
-                    DOM.overlay.style.display = 'block';
-                };
+        // Event Listeners for inputs
+        [inputEl, notBeforeEl, notAfterEl, replacementEl].forEach(el => {
+            el.addEventListener('input', updateOutput);
+        });
 
-                const stop = () => {
-                    if (!isResizing) return;
-                    isResizing = false;
-                    DOM.resizer.classList.remove('dragging');
-                    document.body.style.cursor = 'default';
-                    DOM.overlay.style.display = 'none';
-                    Editor.cm.refresh();
-                };
-
-                const move = (e) => {
-                    if (!isResizing) return;
-                    const containerW = DOM.containers.main.offsetWidth;
-                    let pct = (e.clientX / containerW) * 100;
-                    pct = Math.max(20, Math.min(80, pct)); // Clamp 20-80%
-
-                    DOM.containers.editor.style.width = `${pct}%`;
-                    DOM.containers.preview.style.width = `${100 - pct}%`;
-                    DOM.resizer.style.left = `${pct}%`;
-                };
-
-                DOM.resizer.addEventListener('mousedown', start);
-                document.addEventListener('mousemove', move);
-                document.addEventListener('mouseup', stop);
-            },
-
-            setupUI() {
-                // Modals
-                const toggleModal = (modal, show) => {
-                    modal.classList.toggle('open', show);
-                    if (modal === DOM.modals.settings && !show) {
-                        localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, DOM.inputs.token.value.trim());
-                    }
-                };
-
-                DOM.buttons.settings.onclick = () => toggleModal(DOM.modals.settings, true);
-                DOM.buttons.saveSettings.onclick = () => toggleModal(DOM.modals.settings, false);
-                
-                DOM.buttons.closeModals.forEach(btn => {
-                    btn.onclick = () => {
-                        toggleModal(DOM.modals.settings, false);
-                        toggleModal(DOM.modals.share, false);
-                    };
-                });
-
-                // Mobile Nav
-                DOM.buttons.navItems.forEach(btn => {
-                    btn.onclick = () => {
-                        DOM.buttons.navItems.forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        
-                        const target = btn.dataset.target;
-                        DOM.containers.editor.classList.remove('active');
-                        DOM.containers.preview.classList.remove('active');
-                        document.getElementById(target).classList.add('active');
-                        
-                        if (target === 'editor-container') setTimeout(() => Editor.cm.refresh(), 10);
-                    };
-                });
-
-                // Cast Action
-                DOM.buttons.cast.onclick = this.castPage;
-                
-                // Copy Action
-                DOM.buttons.copy.onclick = () => {
-                    DOM.inputs.shareUrl.select();
-                    navigator.clipboard.writeText(DOM.inputs.shareUrl.value);
-                    const original = DOM.buttons.copy.textContent;
-                    DOM.buttons.copy.textContent = 'Copied!';
-                    setTimeout(() => DOM.buttons.copy.textContent = original, 2000);
-                };
-            },
-
-            async castPage() {
-                const token = DOM.inputs.token.value.trim();
-                if (!token) {
-                    DOM.modals.settings.classList.add('open');
-                    Utils.showToast('GitHub Token required', 'error');
-                    return;
-                }
-
-                const btn = DOM.buttons.cast;
-                const originalContent = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = `<svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Casting...`;
-
-                try {
-                    const res = await fetch('https://api.github.com/gists', {
-                        method: 'POST',
-                        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
-                        body: JSON.stringify({
-                            description: 'Hosted with Page Cast',
-                            public: true,
-                            files: { 'index.html': { content: Editor.cm.getValue() } }
-                        })
-                    });
-
-                    if (!res.ok) throw new Error(res.status === 401 ? 'Invalid Token' : 'API Error');
-                    
-                    const data = await res.json();
-                    const liveUrl = data.files['index.html'].raw_url.replace('gist.githubusercontent.com', 'gist.githack.com');
-
-                    DOM.inputs.shareUrl.value = liveUrl;
-                    DOM.buttons.visit.href = liveUrl;
-                    DOM.modals.share.classList.add('open');
-                    Utils.showToast('Page Casted!', 'success');
-
-                } catch (err) {
-                    Utils.showToast(err.message, 'error');
-                    if (err.message === 'Invalid Token') DOM.modals.settings.classList.add('open');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = originalContent;
-                }
-            }
-        };
-
-        // Start App
-        App.init();
-
+        // Run once on load
+        updateOutput();
     </script>
+
 </body>
 </html>
