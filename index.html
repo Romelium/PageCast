@@ -9,21 +9,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- CodeMirror Core & Theme -->
+    <!-- CodeMirror Dependencies -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-    
-    <!-- CodeMirror Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-    
-    <!-- CodeMirror Addons (Auto-close tags, brackets) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
 
     <style>
         :root {
@@ -38,7 +35,7 @@
             --success: #10b981;
             --error: #ef4444;
             --header-height: 56px;
-            --nav-height: 60px; /* Mobile nav height */
+            --nav-height: 60px;
         }
 
         * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -48,208 +45,169 @@
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-app);
             color: var(--text-main);
-            height: 100vh;
-            height: 100dvh; /* Dynamic viewport height for mobile */
-            display: flex;
-            flex-direction: column;
+            height: 100vh; height: 100dvh;
+            display: flex; flex-direction: column;
             overflow: hidden;
         }
 
-        /* --- Header --- */
+        /* Layout & Header */
         header {
             height: var(--header-height);
             background-color: var(--bg-panel);
             border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            flex-shrink: 0;
-            z-index: 20;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; flex-shrink: 0; z-index: 20;
         }
 
-        .brand {
-            font-weight: 700; font-size: 1.1rem;
-            display: flex; align-items: center; gap: 10px;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-        }
+        .brand { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
         .brand svg { color: var(--primary); }
-        
         .actions { display: flex; gap: 8px; }
-        
+
+        /* Buttons */
         .btn {
             padding: 0 16px; height: 36px; border-radius: 6px; border: none;
             font-weight: 500; cursor: pointer; font-size: 0.875rem;
             transition: all 0.2s; display: flex; align-items: center; gap: 8px;
-            justify-content: center;
+            justify-content: center; text-decoration: none; color: var(--text-main);
         }
         .btn-icon { padding: 0; width: 36px; }
-        
-        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid transparent; }
+        .btn-secondary { background: rgba(255,255,255,0.05); color: var(--text-muted); }
         .btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-main); }
-        
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-primary:active { transform: translateY(0); }
         .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-        /* --- Main Layout --- */
+        /* Main Workspace */
         main {
             flex: 1; display: flex; position: relative; 
-            height: calc(100dvh - var(--header-height));
-            overflow: hidden;
+            height: calc(100dvh - var(--header-height)); overflow: hidden;
         }
+        .pane { height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         
-        .pane { 
-            height: 100%; display: flex; flex-direction: column; position: relative; 
-            overflow: hidden;
-        }
-        
-        /* Editor Pane */
-        #editor-container { width: 50%; background: var(--bg-editor); }
-        .CodeMirror { 
-            height: 100%; 
-            font-family: 'JetBrains Mono', monospace; 
-            font-size: 14px; 
-            line-height: 1.6;
-        }
-        /* Custom Scrollbar for Editor */
+        /* Editor */
+        #editor-container { width: 50%; background: var(--bg-editor); position: relative; }
+        .CodeMirror { height: 100%; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.6; }
         .CodeMirror-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
         .CodeMirror-scroll::-webkit-scrollbar-track { background: var(--bg-editor); }
         .CodeMirror-scroll::-webkit-scrollbar-thumb { background: #44475a; border-radius: 5px; }
+
+        /* Search Panel */
+        .search-panel {
+            position: absolute; top: 10px; right: 20px; width: 340px;
+            background: var(--bg-panel); border: 1px solid var(--border);
+            border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 50; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .search-panel.hidden { transform: translateY(-10px); opacity: 0; pointer-events: none; }
+        .search-row { display: flex; gap: 6px; align-items: center; }
+        .search-input-group { flex: 1; position: relative; display: flex; align-items: center; }
         
-        /* Preview Pane */
+        .search-panel input {
+            width: 100%; background: var(--bg-app); border: 1px solid var(--border);
+            color: white; padding: 6px 8px; border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+        }
+        .search-panel input:focus { border-color: var(--primary); }
+        .search-count { position: absolute; right: 8px; font-size: 0.75rem; color: var(--text-muted); pointer-events: none; }
+        
+        .search-btn {
+            background: rgba(255,255,255,0.1); border: none; color: var(--text-main);
+            width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .search-btn:hover { background: rgba(255,255,255,0.2); }
+        .search-btn.text-btn { width: auto; padding: 0 8px; font-size: 0.75rem; }
+
+        /* Search Highlights */
+        .cm-search-match { background-color: rgba(255, 255, 0, 0.4); }
+        .cm-search-match-active { background-color: rgba(255, 165, 0, 0.8); outline: 1px solid orange; }
+
+        /* Preview & Resizer */
         #preview-container { width: 50%; background: white; position: relative; }
         iframe { width: 100%; height: 100%; border: none; background: white; display: block; }
+        .iframe-overlay { position: absolute; inset: 0; z-index: 5; display: none; }
         
-        /* Overlay to prevent iframe capturing mouse events during resize */
-        .iframe-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 5; display: none;
-        }
-
-        /* Resizer */
         .resizer {
             width: 12px; background: transparent; cursor: col-resize;
             position: absolute; left: 50%; top: 0; bottom: 0; z-index: 30;
             transform: translateX(-50%); display: flex; justify-content: center;
-            align-items: center;
         }
-        /* Visual line inside the invisible grab area */
-        .resizer::after {
-            content: ''; width: 1px; background: var(--border); height: 100%;
-            transition: all 0.2s;
-        }
-        .resizer:hover::after, .resizer.dragging::after { 
-            background: var(--primary); width: 2px; 
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-        }
+        .resizer::after { content: ''; width: 1px; background: var(--border); height: 100%; transition: all 0.2s; }
+        .resizer:hover::after, .resizer.dragging::after { background: var(--primary); width: 2px; }
 
-        /* --- Mobile Navigation (Bottom Bar) --- */
-        .mobile-nav { display: none; }
-
-        /* --- Modal (Settings) --- */
+        /* Modals */
         .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.6); z-index: 100;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100;
             display: none; align-items: center; justify-content: center;
             backdrop-filter: blur(4px); opacity: 0; transition: opacity 0.2s;
         }
         .modal-overlay.open { display: flex; opacity: 1; }
-        
         .modal {
             background: var(--bg-panel); width: 90%; max-width: 420px;
             padding: 24px; border-radius: 16px; border: 1px solid var(--border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transform: scale(0.95); transition: transform 0.2s;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: scale(0.95); transition: transform 0.2s;
         }
         .modal-overlay.open .modal { transform: scale(1); }
-        
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal h2 { margin: 0; font-size: 1.25rem; color: var(--text-main); }
-        .close-modal { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; }
+        .modal h2 { margin: 0; font-size: 1.25rem; }
+        .close-modal { background: none; border: none; color: var(--text-muted); cursor: pointer; }
         
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-muted); }
         .form-group input {
             width: 100%; padding: 12px; background: var(--bg-app);
             border: 1px solid var(--border); color: white; border-radius: 8px;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
-            transition: border-color 0.2s;
+            font-family: 'JetBrains Mono', monospace;
         }
         .form-group input:focus { border-color: var(--primary); }
-        
-        .help-text { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; }
-        .help-text a { color: var(--primary); text-decoration: none; font-weight: 500; }
-        .help-text a:hover { text-decoration: underline; }
+        .help-text { font-size: 0.85rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; }
+        .help-text a { color: var(--primary); text-decoration: none; }
 
-        /* --- Toast Notification --- */
+        /* Toast */
         .toast {
             position: fixed; bottom: 24px; right: 24px;
             background: var(--bg-panel); border: 1px solid var(--border);
-            padding: 16px; border-radius: 10px;
-            display: flex; align-items: center; gap: 12px;
+            padding: 16px; border-radius: 10px; display: flex; align-items: center; gap: 12px;
             transform: translateY(20px); opacity: 0; pointer-events: none;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 200; max-width: 380px; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s; z-index: 200;
         }
         .toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
-        
-        .toast-icon { display: flex; align-items: center; justify-content: center; }
         .toast.success .toast-icon { color: var(--success); }
         .toast.error .toast-icon { color: var(--error); }
-        
-        .toast-content { flex: 1; font-size: 0.9rem; line-height: 1.4; }
-        .toast-action {
-            background: rgba(255,255,255,0.1); border: none; color: var(--text-main);
-            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
-            transition: background 0.2s;
-        }
-        .toast-action:hover { background: rgba(255,255,255,0.2); }
 
-        /* --- Responsive / Mobile --- */
+        /* Utilities */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .mobile-nav { display: none; }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .desktop-text { display: none; }
             header { padding: 0 12px; }
-            
-            /* Adjust Main Height to account for bottom nav */
             main { height: calc(100dvh - var(--header-height) - var(--nav-height)); }
-            
-            /* Hide Resizer on Mobile */
             .resizer { display: none; }
-            
-            /* Stack panes but hide inactive one */
-            #editor-container, #preview-container { width: 100%; height: 100%; display: none; border: none; }
+            #editor-container, #preview-container { width: 100%; height: 100%; display: none; }
             #editor-container.active, #preview-container.active { display: block; }
             
-            /* Mobile Bottom Nav */
             .mobile-nav {
                 height: var(--nav-height); background: var(--bg-panel);
                 border-top: 1px solid var(--border);
                 display: flex; justify-content: space-around; align-items: center;
-                flex-shrink: 0; z-index: 50;
-                padding-bottom: env(safe-area-inset-bottom); /* iPhone Home Bar support */
+                flex-shrink: 0; z-index: 50; padding-bottom: env(safe-area-inset-bottom);
             }
-            
             .nav-item {
                 flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-                background: none; border: none; color: var(--text-muted);
-                gap: 4px; cursor: pointer; height: 100%;
-                font-size: 0.75rem; font-weight: 500;
+                background: none; border: none; color: var(--text-muted); gap: 4px; height: 100%; font-size: 0.75rem;
             }
-            .nav-item svg { width: 20px; height: 20px; }
             .nav-item.active { color: var(--primary); background: rgba(255,255,255,0.02); }
-            
-            .toast { left: 16px; right: 16px; bottom: 80px; max-width: none; }
+            .toast { left: 16px; right: 16px; bottom: 80px; }
+            .search-panel { left: 10px; right: 10px; width: auto; top: 10px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
     <header>
         <div class="brand">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
@@ -267,10 +225,29 @@
         </div>
     </header>
 
-    <!-- Main Workspace -->
     <main>
         <div id="editor-container" class="pane active">
             <textarea id="code-editor"></textarea>
+            
+            <!-- Search & Replace Panel -->
+            <div id="search-panel" class="search-panel hidden">
+                <div class="search-row">
+                    <div class="search-input-group">
+                        <input type="text" id="find-input" placeholder="Find">
+                        <span id="search-count" class="search-count"></span>
+                    </div>
+                    <button class="search-btn" id="find-prev" title="Previous (Shift+Enter)">↑</button>
+                    <button class="search-btn" id="find-next" title="Next (Enter)">↓</button>
+                    <button class="search-btn" id="close-search" title="Close (Esc)">×</button>
+                </div>
+                <div class="search-row" id="replace-row" style="display:none">
+                    <div class="search-input-group">
+                        <input type="text" id="replace-input" placeholder="Replace">
+                    </div>
+                    <button class="search-btn text-btn" id="replace-btn">Replace</button>
+                    <button class="search-btn text-btn" id="replace-all-btn">All</button>
+                </div>
+            </div>
         </div>
         
         <div class="resizer" id="resizer"></div>
@@ -281,14 +258,13 @@
         </div>
     </main>
 
-    <!-- Mobile Navigation -->
     <nav class="mobile-nav">
         <button class="nav-item active" data-target="editor-container">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
             Code
         </button>
         <button class="nav-item" data-target="preview-container">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             Preview
         </button>
     </nav>
@@ -298,9 +274,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h2>Settings</h2>
-                <button class="close-modal" id="close-modal-btn">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
+                <button class="close-modal" data-close="settings-modal">✕</button>
             </div>
             <div class="form-group">
                 <label for="github-token">GitHub Personal Access Token</label>
@@ -313,7 +287,6 @@
                     <li>Generate a token with <strong>gist</strong> scope.</li>
                     <li>Paste it above.</li>
                 </ol>
-                <small>Your token is saved locally in your browser.</small>
             </div>
             <div style="text-align: right; margin-top: 24px;">
                 <button class="btn btn-primary" id="save-settings" style="width: 100%">Save & Close</button>
@@ -321,290 +294,458 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="share-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Page Published!</h2>
+                <button class="close-modal" data-close="share-modal">✕</button>
+            </div>
+            <div class="form-group">
+                <label for="share-url">Your Live URL</label>
+                <input type="text" id="share-url" readonly onclick="this.select()">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-secondary" id="copy-url-btn" style="flex:1">Copy</button>
+                <a href="#" target="_blank" id="visit-url-btn" class="btn btn-primary" style="flex:1">Visit</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
     <div class="toast" id="toast">
         <div class="toast-icon" id="toast-icon"></div>
-        <div class="toast-content" id="toast-msg">Message</div>
-        <button class="toast-action" id="toast-action-btn" style="display:none">Action</button>
+        <div class="toast-content" id="toast-msg"></div>
     </div>
 
     <script>
-        // --- Configuration & State ---
-        const elements = {
-            editor: document.getElementById('code-editor'),
-            preview: document.getElementById('preview-frame'),
-            resizer: document.getElementById('resizer'),
-            editorContainer: document.getElementById('editor-container'),
-            previewContainer: document.getElementById('preview-container'),
-            iframeOverlay: document.getElementById('iframe-overlay'),
-            settingsBtn: document.getElementById('settings-btn'),
-            settingsModal: document.getElementById('settings-modal'),
-            closeModalBtn: document.getElementById('close-modal-btn'),
-            saveSettingsBtn: document.getElementById('save-settings'),
-            tokenInput: document.getElementById('github-token'),
-            castBtn: document.getElementById('cast-btn'),
-            toast: document.getElementById('toast'),
-            toastMsg: document.getElementById('toast-msg'),
-            toastIcon: document.getElementById('toast-icon'),
-            toastAction: document.getElementById('toast-action-btn'),
-            navItems: document.querySelectorAll('.nav-item')
-        };
-
-        const defaultHTML = `<!DOCTYPE html>
+        // --- Constants & Config ---
+        const CONFIG = {
+            DEFAULT_CODE: `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Page</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background: #f0f2f5;
-            color: #1f2937;
-        }
-        .card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 90%;
-            width: 400px;
-        }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; color: #1f2937; }
+        .card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 400px; }
         h1 { color: #3b82f6; margin-top: 0; }
-        p { line-height: 1.6; color: #6b7280; }
-        .btn {
-            display: inline-block;
-            margin-top: 1rem;
-            padding: 0.75rem 1.5rem;
-            background: #3b82f6;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-        .btn:hover { background: #2563eb; }
+        .btn { display: inline-block; margin-top: 1rem; padding: 0.75rem 1.5rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Hello World!</h1>
-        <p>This is a live preview. Edit the code on the left (or "Code" tab on mobile) to see changes instantly.</p>
+        <p>Edit code to see changes instantly.</p>
         <a href="#" class="btn">Click Me</a>
     </div>
 </body>
-</html>`;
-
-        // --- Initialization ---
-        
-        // Load Saved Data
-        const savedToken = localStorage.getItem('pc_token');
-        const savedCode = localStorage.getItem('pc_code');
-        if (savedToken) elements.tokenInput.value = savedToken;
-
-        // Setup CodeMirror
-        const cm = CodeMirror.fromTextArea(elements.editor, {
-            mode: 'htmlmixed',
-            theme: 'dracula',
-            lineNumbers: true,
-            lineWrapping: true,
-            autofocus: true,
-            tabSize: 2,
-            autoCloseTags: true,
-            autoCloseBrackets: true,
-            matchBrackets: true,
-            indentUnit: 2
-        });
-        
-        cm.setValue(savedCode || defaultHTML);
-
-        // --- Core Logic ---
-
-        // 1. Live Preview & Auto-save
-        const updatePreview = () => {
-            const code = cm.getValue();
-            elements.preview.srcdoc = code;
-            localStorage.setItem('pc_code', code);
-        };
-        
-        let timeout;
-        cm.on('change', () => {
-            clearTimeout(timeout);
-            timeout = setTimeout(updatePreview, 600); // Debounce
-        });
-        updatePreview(); // Initial load
-
-        // 2. Resizer Logic (Desktop)
-        let isResizing = false;
-        
-        const startResize = () => {
-            isResizing = true;
-            elements.resizer.classList.add('dragging');
-            document.body.style.cursor = 'col-resize';
-            elements.iframeOverlay.style.display = 'block'; // Enable overlay to prevent iframe capturing mouse
+</html>`,
+            STORAGE_KEYS: { TOKEN: 'pc_token', CODE: 'pc_code' }
         };
 
-        const stopResize = () => {
-            if(isResizing) {
-                isResizing = false;
-                elements.resizer.classList.remove('dragging');
-                document.body.style.cursor = 'default';
-                elements.iframeOverlay.style.display = 'none';
-                cm.refresh(); 
+        // --- DOM Elements ---
+        const DOM = {
+            editor: document.getElementById('code-editor'),
+            preview: document.getElementById('preview-frame'),
+            resizer: document.getElementById('resizer'),
+            containers: {
+                editor: document.getElementById('editor-container'),
+                preview: document.getElementById('preview-container'),
+                main: document.querySelector('main')
+            },
+            overlay: document.getElementById('iframe-overlay'),
+            modals: {
+                settings: document.getElementById('settings-modal'),
+                share: document.getElementById('share-modal')
+            },
+            inputs: {
+                token: document.getElementById('github-token'),
+                shareUrl: document.getElementById('share-url'),
+                find: document.getElementById('find-input'),
+                replace: document.getElementById('replace-input')
+            },
+            buttons: {
+                settings: document.getElementById('settings-btn'),
+                saveSettings: document.getElementById('save-settings'),
+                cast: document.getElementById('cast-btn'),
+                copy: document.getElementById('copy-url-btn'),
+                visit: document.getElementById('visit-url-btn'),
+                closeModals: document.querySelectorAll('.close-modal'),
+                navItems: document.querySelectorAll('.nav-item'),
+                // Search Buttons
+                findNext: document.getElementById('find-next'),
+                findPrev: document.getElementById('find-prev'),
+                closeSearch: document.getElementById('close-search'),
+                replace: document.getElementById('replace-btn'),
+                replaceAll: document.getElementById('replace-all-btn')
+            },
+            search: {
+                panel: document.getElementById('search-panel'),
+                replaceRow: document.getElementById('replace-row'),
+                count: document.getElementById('search-count')
+            },
+            toast: {
+                el: document.getElementById('toast'),
+                msg: document.getElementById('toast-msg'),
+                icon: document.getElementById('toast-icon')
             }
         };
 
-        const resize = (e) => {
-            if (!isResizing) return;
-            const containerWidth = document.querySelector('main').offsetWidth;
-            // Calculate percentage
-            let newWidth = (e.clientX / containerWidth) * 100;
-            // Constraints
-            if (newWidth < 20) newWidth = 20;
-            if (newWidth > 80) newWidth = 80;
-
-            elements.editorContainer.style.width = `${newWidth}%`;
-            elements.previewContainer.style.width = `${100 - newWidth}%`;
-            elements.resizer.style.left = `${newWidth}%`;
+        // --- Utilities ---
+        const Utils = {
+            debounce: (func, wait) => {
+                let timeout;
+                return (...args) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            },
+            
+            showToast: (msg, type = 'info') => {
+                const icons = {
+                    success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+                    error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
+                };
+                DOM.toast.icon.innerHTML = icons[type] || '';
+                DOM.toast.msg.textContent = msg;
+                DOM.toast.el.className = `toast show ${type}`;
+                setTimeout(() => DOM.toast.el.classList.remove('show'), 4000);
+            }
         };
 
-        elements.resizer.addEventListener('mousedown', startResize);
-        document.addEventListener('mousemove', resize);
-        document.addEventListener('mouseup', stopResize);
+        // --- Search Logic ---
+        const Search = {
+            overlay: null,
+            
+            init() {
+                // Event Listeners
+                DOM.inputs.find.addEventListener('input', () => this.update());
+                DOM.inputs.find.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.shiftKey ? this.findPrev() : this.findNext();
+                    }
+                });
+                DOM.inputs.replace.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.replace();
+                });
+                
+                DOM.buttons.findNext.onclick = () => this.findNext();
+                DOM.buttons.findPrev.onclick = () => this.findPrev();
+                DOM.buttons.closeSearch.onclick = () => this.close();
+                DOM.buttons.replace.onclick = () => this.replace();
+                DOM.buttons.replaceAll.onclick = () => this.replaceAll();
+            },
 
-        // 3. Mobile Navigation
-        elements.navItems.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // UI Update
-                elements.navItems.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // View Update
-                const targetId = btn.dataset.target;
-                elements.editorContainer.classList.remove('active');
-                elements.previewContainer.classList.remove('active');
-                document.getElementById(targetId).classList.add('active');
-                
-                // Refresh editor if visible to fix rendering glitches
-                if(targetId === 'editor-container') {
-                    setTimeout(() => cm.refresh(), 10);
+            toggle(showReplace = false) {
+                DOM.search.panel.classList.remove('hidden');
+                DOM.search.replaceRow.style.display = showReplace ? 'flex' : 'none';
+                DOM.inputs.find.focus();
+                if (Editor.cm.getSelection()) {
+                    DOM.inputs.find.value = Editor.cm.getSelection();
                 }
-            });
-        });
+                this.update();
+            },
 
-        // 4. Settings Modal
-        const toggleModal = (show) => {
-            elements.settingsModal.classList.toggle('open', show);
-            if (!show) {
-                localStorage.setItem('pc_token', elements.tokenInput.value.trim());
-            } else {
-                elements.tokenInput.focus();
+            close() {
+                DOM.search.panel.classList.add('hidden');
+                Editor.cm.focus();
+                this.clearOverlay();
+            },
+
+            clearOverlay() {
+                if (this.overlay) {
+                    Editor.cm.removeOverlay(this.overlay);
+                    this.overlay = null;
+                }
+                DOM.search.count.textContent = '';
+            },
+
+            update() {
+                const query = DOM.inputs.find.value;
+                this.clearOverlay();
+                if (!query) return;
+
+                // Highlight Overlay
+                this.overlay = {
+                    token: (stream) => {
+                        if (stream.match(query, false)) {
+                            stream.match(query);
+                            return "search-match";
+                        }
+                        while (stream.next() != null && !stream.match(query, false)) {}
+                        return null;
+                    }
+                };
+                Editor.cm.addOverlay(this.overlay);
+                this.countMatches(query);
+            },
+
+            countMatches(query) {
+                let cursor = Editor.cm.getSearchCursor(query);
+                let total = 0;
+                while (cursor.findNext()) total++;
+                
+                if (total === 0) {
+                    DOM.search.count.textContent = 'No results';
+                } else {
+                    this.updateCurrentIndex(query, total);
+                }
+            },
+
+            updateCurrentIndex(query, total) {
+                // Calculate "X of Y" based on cursor position
+                let current = 0;
+                let cursor = Editor.cm.getSearchCursor(query);
+                const selfPos = Editor.cm.getCursor('head');
+                
+                let found = false;
+                let idx = 0;
+                while(cursor.findNext()) {
+                    idx++;
+                    const to = cursor.to();
+                    // If cursor is at the end of a match, consider that the current one
+                    if (selfPos.line === to.line && selfPos.ch === to.ch) {
+                        current = idx;
+                        found = true;
+                    }
+                }
+                // Fallback: if not exactly on a match, show total
+                DOM.search.count.textContent = found ? `${current} of ${total}` : `${total} matches`;
+            },
+
+            findNext() { this.navigate(false); },
+            findPrev() { this.navigate(true); },
+
+            navigate(reverse) {
+                const query = DOM.inputs.find.value;
+                if (!query) return;
+                
+                const cursor = Editor.cm.getSearchCursor(query, Editor.cm.getCursor());
+                const found = reverse ? cursor.findPrevious() : cursor.findNext();
+
+                if (found) {
+                    Editor.cm.setSelection(cursor.from(), cursor.to());
+                    Editor.cm.scrollIntoView({from: cursor.from(), to: cursor.to()}, 20);
+                } else {
+                    // Wrap around
+                    const startPos = reverse 
+                        ? {line: Editor.cm.lastLine(), ch: Editor.cm.getLine(Editor.cm.lastLine()).length} 
+                        : {line: 0, ch: 0};
+                    const wrapCursor = Editor.cm.getSearchCursor(query, startPos);
+                    if (reverse ? wrapCursor.findPrevious() : wrapCursor.findNext()) {
+                        Editor.cm.setSelection(wrapCursor.from(), wrapCursor.to());
+                        Editor.cm.scrollIntoView({from: wrapCursor.from(), to: wrapCursor.to()}, 20);
+                    }
+                }
+                this.countMatches(query);
+            },
+
+            replace() {
+                const query = DOM.inputs.find.value;
+                const replacement = DOM.inputs.replace.value;
+                if (!query) return;
+                
+                const cursor = Editor.cm.getSearchCursor(query, Editor.cm.getCursor());
+                if (cursor.findNext()) {
+                    cursor.replace(replacement);
+                    this.findNext();
+                    this.update();
+                } else {
+                    this.findNext();
+                }
+            },
+
+            replaceAll() {
+                const query = DOM.inputs.find.value;
+                const replacement = DOM.inputs.replace.value;
+                if (!query) return;
+
+                Editor.cm.operation(() => {
+                    const cursor = Editor.cm.getSearchCursor(query);
+                    while (cursor.findNext()) cursor.replace(replacement);
+                });
+                this.update();
             }
         };
-        elements.settingsBtn.addEventListener('click', () => toggleModal(true));
-        elements.closeModalBtn.addEventListener('click', () => toggleModal(false));
-        elements.saveSettingsBtn.addEventListener('click', () => toggleModal(false));
-        elements.settingsModal.addEventListener('click', (e) => {
-            if (e.target === elements.settingsModal) toggleModal(false);
-        });
 
-        // 5. Toast System
-        let toastTimeout;
-        const showToast = (msg, type = 'info', actionText = null, actionCallback = null) => {
-            clearTimeout(toastTimeout);
-            
-            // Icons
-            let iconSvg = '';
-            if(type === 'success') iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-            else if(type === 'error') iconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
-            
-            elements.toastIcon.innerHTML = iconSvg;
-            elements.toastMsg.innerHTML = msg;
-            elements.toast.className = `toast show ${type}`;
-            
-            if (actionText && actionCallback) {
-                elements.toastAction.style.display = 'block';
-                elements.toastAction.textContent = actionText;
-                elements.toastAction.onclick = actionCallback;
-            } else {
-                elements.toastAction.style.display = 'none';
-            }
-
-            toastTimeout = setTimeout(() => {
-                elements.toast.classList.remove('show');
-            }, 5000);
-        };
-
-        // 6. Cast (Publish) Logic
-        elements.castBtn.addEventListener('click', async () => {
-            const token = elements.tokenInput.value.trim();
-            const content = cm.getValue();
-
-            if (!token) {
-                toggleModal(true);
-                showToast('Please enter your GitHub Token first.', 'error');
-                return;
-            }
-
-            // UI Loading State
-            const originalBtnContent = elements.castBtn.innerHTML;
-            elements.castBtn.disabled = true;
-            elements.castBtn.innerHTML = `<svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Casting...`;
-            
-            // Add simple spin animation style dynamically
-            if(!document.getElementById('spin-style')) {
-                const style = document.createElement('style');
-                style.id = 'spin-style';
-                style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`;
-                document.head.appendChild(style);
-            }
-
-            try {
-                const response = await fetch('https://api.github.com/gists', {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `token ${token}`, 
-                        'Accept': 'application/vnd.github.v3+json' 
-                    },
-                    body: JSON.stringify({
-                        description: 'Hosted with Page Cast',
-                        public: true,
-                        files: { 'index.html': { content: content } }
-                    })
+        // --- Editor Logic ---
+        const Editor = {
+            cm: null,
+            init() {
+                this.cm = CodeMirror.fromTextArea(DOM.editor, {
+                    mode: 'htmlmixed', theme: 'dracula',
+                    lineNumbers: true, lineWrapping: true,
+                    autofocus: true, tabSize: 2, indentUnit: 2,
+                    autoCloseTags: true, autoCloseBrackets: true, matchBrackets: true,
+                    extraKeys: {
+                        "Ctrl-F": () => Search.toggle(false),
+                        "Cmd-F": () => Search.toggle(false),
+                        "Ctrl-H": () => Search.toggle(true),
+                        "Cmd-Option-F": () => Search.toggle(true),
+                        "Esc": () => Search.close(),
+                        "F3": () => Search.findNext(),
+                        "Shift-F3": () => Search.findPrev()
+                    }
                 });
 
-                if (!response.ok) {
-                    if(response.status === 401) throw new Error('Invalid Token');
-                    throw new Error('GitHub API Error');
-                }
+                const savedCode = localStorage.getItem(CONFIG.STORAGE_KEYS.CODE);
+                this.cm.setValue(savedCode || CONFIG.DEFAULT_CODE);
                 
-                const data = await response.json();
-                const rawUrl = data.files['index.html'].raw_url;
-                // Convert raw GitHub URL to a CDN URL for rendering HTML
-                const liveUrl = rawUrl.replace('gist.githubusercontent.com', 'gist.githack.com');
+                this.cm.on('change', Utils.debounce(() => {
+                    const code = this.cm.getValue();
+                    DOM.preview.srcdoc = code;
+                    localStorage.setItem(CONFIG.STORAGE_KEYS.CODE, code);
+                }, 600));
+                
+                // Initial Preview
+                DOM.preview.srcdoc = this.cm.getValue();
+            }
+        };
 
-                showToast('Page Casted Successfully!', 'success', 'Copy URL', () => {
-                    navigator.clipboard.writeText(liveUrl);
-                    elements.toastAction.textContent = 'Copied!';
-                    setTimeout(() => elements.toastAction.textContent = 'Copy URL', 2000);
+        // --- App Logic ---
+        const App = {
+            init() {
+                Editor.init();
+                Search.init();
+                this.setupResizer();
+                this.setupUI();
+                
+                // Load Token
+                const savedToken = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+                if (savedToken) DOM.inputs.token.value = savedToken;
+            },
+
+            setupResizer() {
+                let isResizing = false;
+                
+                const start = () => {
+                    isResizing = true;
+                    DOM.resizer.classList.add('dragging');
+                    document.body.style.cursor = 'col-resize';
+                    DOM.overlay.style.display = 'block';
+                };
+
+                const stop = () => {
+                    if (!isResizing) return;
+                    isResizing = false;
+                    DOM.resizer.classList.remove('dragging');
+                    document.body.style.cursor = 'default';
+                    DOM.overlay.style.display = 'none';
+                    Editor.cm.refresh();
+                };
+
+                const move = (e) => {
+                    if (!isResizing) return;
+                    const containerW = DOM.containers.main.offsetWidth;
+                    let pct = (e.clientX / containerW) * 100;
+                    pct = Math.max(20, Math.min(80, pct)); // Clamp 20-80%
+
+                    DOM.containers.editor.style.width = `${pct}%`;
+                    DOM.containers.preview.style.width = `${100 - pct}%`;
+                    DOM.resizer.style.left = `${pct}%`;
+                };
+
+                DOM.resizer.addEventListener('mousedown', start);
+                document.addEventListener('mousemove', move);
+                document.addEventListener('mouseup', stop);
+            },
+
+            setupUI() {
+                // Modals
+                const toggleModal = (modal, show) => {
+                    modal.classList.toggle('open', show);
+                    if (modal === DOM.modals.settings && !show) {
+                        localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, DOM.inputs.token.value.trim());
+                    }
+                };
+
+                DOM.buttons.settings.onclick = () => toggleModal(DOM.modals.settings, true);
+                DOM.buttons.saveSettings.onclick = () => toggleModal(DOM.modals.settings, false);
+                
+                DOM.buttons.closeModals.forEach(btn => {
+                    btn.onclick = () => {
+                        toggleModal(DOM.modals.settings, false);
+                        toggleModal(DOM.modals.share, false);
+                    };
                 });
 
-            } catch (error) {
-                console.error(error);
-                let msg = 'Failed to cast page.';
-                if(error.message === 'Invalid Token') msg = 'Invalid GitHub Token.';
-                showToast(msg, 'error', 'Settings', () => toggleModal(true));
-            } finally {
-                elements.castBtn.disabled = false;
-                elements.castBtn.innerHTML = originalBtnContent;
+                // Mobile Nav
+                DOM.buttons.navItems.forEach(btn => {
+                    btn.onclick = () => {
+                        DOM.buttons.navItems.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        const target = btn.dataset.target;
+                        DOM.containers.editor.classList.remove('active');
+                        DOM.containers.preview.classList.remove('active');
+                        document.getElementById(target).classList.add('active');
+                        
+                        if (target === 'editor-container') setTimeout(() => Editor.cm.refresh(), 10);
+                    };
+                });
+
+                // Cast Action
+                DOM.buttons.cast.onclick = this.castPage;
+                
+                // Copy Action
+                DOM.buttons.copy.onclick = () => {
+                    DOM.inputs.shareUrl.select();
+                    navigator.clipboard.writeText(DOM.inputs.shareUrl.value);
+                    const original = DOM.buttons.copy.textContent;
+                    DOM.buttons.copy.textContent = 'Copied!';
+                    setTimeout(() => DOM.buttons.copy.textContent = original, 2000);
+                };
+            },
+
+            async castPage() {
+                const token = DOM.inputs.token.value.trim();
+                if (!token) {
+                    DOM.modals.settings.classList.add('open');
+                    Utils.showToast('GitHub Token required', 'error');
+                    return;
+                }
+
+                const btn = DOM.buttons.cast;
+                const originalContent = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Casting...`;
+
+                try {
+                    const res = await fetch('https://api.github.com/gists', {
+                        method: 'POST',
+                        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' },
+                        body: JSON.stringify({
+                            description: 'Hosted with Page Cast',
+                            public: true,
+                            files: { 'index.html': { content: Editor.cm.getValue() } }
+                        })
+                    });
+
+                    if (!res.ok) throw new Error(res.status === 401 ? 'Invalid Token' : 'API Error');
+                    
+                    const data = await res.json();
+                    const liveUrl = data.files['index.html'].raw_url.replace('gist.githubusercontent.com', 'gist.githack.com');
+
+                    DOM.inputs.shareUrl.value = liveUrl;
+                    DOM.buttons.visit.href = liveUrl;
+                    DOM.modals.share.classList.add('open');
+                    Utils.showToast('Page Casted!', 'success');
+
+                } catch (err) {
+                    Utils.showToast(err.message, 'error');
+                    if (err.message === 'Invalid Token') DOM.modals.settings.classList.add('open');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }
             }
-        });
+        };
+
+        // Start App
+        App.init();
 
     </script>
 </body>
